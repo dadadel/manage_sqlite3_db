@@ -117,3 +117,85 @@ class ManageSqliteDB(object):
             )
         self.request(req)
 
+
+def show_menu():
+    txt = '------------\n'
+    txt += '0 - exit\n'
+    txt += '1 - open DB\n'
+    txt += '2 - close\n'
+    txt += '3 - get\n'
+    txt += '4 - set\n'
+    txt += '5 - del\n'
+    txt += '6 - list tables\n'
+    txt += '7 - create table\n'
+    txt += '8 - request\n'
+    print(txt)
+
+
+if __name__ == '__main__':
+    print ("ManageSqliteDB v" + __version__)
+    db = ManageSqliteDB(auto=False)
+    txt = '\nManageDB interactive\n'
+    print(txt)
+    while True:
+        show_menu()
+        c = int(input('Your choice: '))
+        if c == 0:
+            break
+
+        elif c == 1:
+            n = input('DB file name: ')
+            db.opendb(n)
+
+        elif c == 2:
+            db.closedb()
+
+        elif c == 3:
+            table = input('Table where to get items: ')
+            fields = input('Fields to get (coma separated, else "*" for all): ')
+            if fields == "*":
+                fields = None
+            else:
+                fields = [s.strip() for s in fields.split(",")]
+            print(db.get(table, fields))
+
+        elif c == 4:
+            table = input('Table where to add item: ')
+            couples = input('Couples of field=value to set (coma separated): ')
+            couples = [s.strip() for s in couples.split(",")]
+            data = {}
+            for couple in couples:
+                k, v = couple.split("=")
+                data[k.strip()] = v.strip()
+            db.set(table, **data)
+
+        elif c == 5:
+            table = input('Table where to delete an item: ')
+            couples = input('Couples of field=value identifying the item (coma separated): ')
+            couples = [s.strip() for s in couples.split(",")]
+            data = {}
+            for couple in couples:
+                k, v = couple.split("=")
+                data[k.strip()] = v.strip()
+            db.delete(table, **data)
+
+        elif c == 6:
+            print(db.list_tables())
+
+        elif c == 7:
+            table = input('Table to create: ')
+            fields = input('List (coma separated) of fields (of type TEXT) and/or couples field=type: ')
+            fields = [s.strip() for s in fields.split(",")]
+            l = []
+            for field in fields:
+                if "=" in field:
+                    k, v = field.split("=")
+                    l.append((k.strip(), v.strip()))
+                else:
+                    l.append(field.strip())
+            db.create(table, l)
+
+        elif c == 8:
+            req = input('Request: ')
+            print("Result:\n{}".format(db.request(req)))
+
