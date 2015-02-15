@@ -66,6 +66,10 @@ class ManageSqliteDB(object):
         self.request("SELECT name FROM sqlite_master WHERE type='table'")
         return [e[0] for e in self.cursor.fetchall()]
 
+    def list_fields(self, table):
+        self.request("PRAGMA table_info('{}')".format(table))
+        return [e[1] for e in self.cursor.fetchall()]
+
     def request(self, req, values=None):
         if values:
             self.cursor.execute(req, values)
@@ -129,6 +133,7 @@ def show_menu():
     txt += '6 - list tables\n'
     txt += '7 - create table\n'
     txt += '8 - request\n'
+    txt += '9 - list fields\n'
     print(txt)
 
 
@@ -158,6 +163,10 @@ if __name__ == '__main__':
             else:
                 fields = [s.strip() for s in fields.split(",")]
             print(db.get(table, fields))
+
+        elif c == 9:
+            table = input('Table where to get fields: ')
+            print(db.list_fields(table))
 
         elif c == 4:
             table = input('Table where to add item: ')
