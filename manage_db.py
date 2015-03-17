@@ -92,12 +92,31 @@ class ManageSqliteDB(object):
                     )
         self.request(req)
 
-    def get(self, table, fields=None):
+    def update(self, table, where, **kwargs):
+        """Update a record.
+        :param table: the concerned table
+        :param where: the condition(s)
+        :type where: dict
+        :param kwargs: the parameters to set
+        :type kwargs: dict
+        """
+        values = tuple(kwargs.values() + where.values())
+        by = ", ".join([k + "=?" for k in kwargs.keys()])
+        where = " AND ".join([k + "=?" for k in where.keys()])
+        req = "UPDATE {} SET {} WHERE {};".format(table,
+                    by,
+                    where
+                    )
+        self.request(req, values)
+
+    def get(self, table, fields=None, **kwargs):
         '''Gets from the DB some fields from all records with or without
         condition(s).
         :param fields: list of fields to retrieve. If not given all fields are
         retrieved.
         :type fields: list or None
+        :param kwargs: the wanted values for fields as condition
+        :type kwargs: dict
         :returns: a list of the found items
         :rtype: list of tuples
         '''
@@ -105,10 +124,18 @@ class ManageSqliteDB(object):
             fields = '*'
         else:
             fields = ", ".join(fields)
-        req = "SELECT {} FROM {}".format(
-                fields,
-                table
-                )
+        if len(kwargs):
+            condition = " AND ".join([k + "='" + v + "'" for k, v in kwargs.items()])
+            req = "SELECT {} FROM {} WHERE {}".format(
+                    fields,
+                    table,
+                    condition
+                    )
+        else:
+            req = "SELECT {} FROM {}".format(
+                    fields,
+                    table
+                    )
         self.request(req)
         res = self.cursor.fetchall()
         return res
@@ -134,6 +161,7 @@ def show_menu():
     txt += '7 - create table\n'
     txt += '8 - request\n'
     txt += '9 - list fields\n'
+    txt += '10 - get with condition\n'
     print(txt)
 
 
@@ -163,6 +191,21 @@ if __name__ == '__main__':
             else:
                 fields = [s.strip() for s in fields.split(",")]
             print(db.get(table, fields))
+
+        elif c == 10:
+            table = input('Table where to get items with condition: ')
+            fields = input('Fields to get (coma separated, else "*" for all): ')
+            conditions = input('Conditions (couples of field=value coma separated): ')
+            conditions = [s.strip() for s in conditions.split(",")]
+            if fields == "*":
+                fields = None
+            else:
+                fields = [s.strip() for s in fields.split(",")]
+            data = {}
+            for condition in conditions:
+                k, v = condition.split("=")
+                data[k.strip()] = v.strip()
+            print(db.get(table, fields, **data))
 
         elif c == 9:
             table = input('Table where to get fields: ')
